@@ -1,0 +1,49 @@
+{
+  "manifest_version": 3,
+  "name": "Crafy Web Engine",
+  "version": "1.1",
+  "description": "Motor Web de Crafy Holding y sus aplicaciones.",
+  "permissions": [
+    "scripting"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "web_accessible_resources": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "resources": [
+        "chatgpt.js"
+      ]
+    }
+  ],
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon.png"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.bing.com/*"
+      ],
+      "js": [
+        "content.js"
+      ]
+    }
+  ],
+  "externally_connectable": {
+    "matches": [
+      "*://*.chijete.com/*",
+      "*://*.bitbooklite.com/*",
+      "*://*.socialnc.org/*",
+      "*://*.xzocial.com/*",
+      "*://localhost/*"
+    ]
+  }
+}
