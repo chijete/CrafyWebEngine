@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Crafy Web Engine",
-  "version": "1.1",
+  "version": "1.2",
   "description": "Motor Web de Crafy Holding y sus aplicaciones.",
   "permissions": [
     "scripting"
@@ -30,7 +30,7 @@
   "content_scripts": [
     {
       "matches": [
-        "*://*.bing.com/*"
+        "*://*.bing.com/images/create*"
       ],
       "js": [
         "content.js"

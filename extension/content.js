@@ -1,6 +1,6 @@
 // ChatGPT.js library: https://github.com/KudoAI/chatgpt.js
 
-console.log('Crafy Engine inserted!');
+console.log('[Crafy Web Engine] Crafy Engine inserted!');
 
 var workingOnItSignal = `
 <div style="display: block; visibility: visible; width: 250px; height: 250px; background: #1FC276; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 10px; border-radius: 10px; z-index: 19000; margin: 0;">
@@ -34,56 +34,56 @@ async function helper_waitForLoaded() {
   return true;
 }
 
-function helper_getReceivedMessages() {
-  var resultado = [];
-  var elementos = document.querySelectorAll(gptSystemConfig['iaMessagesQuerySelector']);
-  for (const elemento of elementos) {
-    let pElems = elemento.querySelectorAll('p');
-    if (pElems.length > 0) {
-      pText = '';
-      var firstTime = true;
-      for (const pElm of pElems) {
-        if (firstTime) {
-          pText += pElm.innerText;
-          firstTime = false;
-        } else {
-          pText += '\n' + pElm.innerText;
-        }
-      }
-      resultado.push(pText);
-    }
-  }
-  return resultado;
-}
+// function helper_getReceivedMessages() {
+//   var resultado = [];
+//   var elementos = document.querySelectorAll(gptSystemConfig['iaMessagesQuerySelector']);
+//   for (const elemento of elementos) {
+//     let pElems = elemento.querySelectorAll('p');
+//     if (pElems.length > 0) {
+//       pText = '';
+//       var firstTime = true;
+//       for (const pElm of pElems) {
+//         if (firstTime) {
+//           pText += pElm.innerText;
+//           firstTime = false;
+//         } else {
+//           pText += '\n' + pElm.innerText;
+//         }
+//       }
+//       resultado.push(pText);
+//     }
+//   }
+//   return resultado;
+// }
 
-async function helper_waitForMessage() {
-  var whileController = true;
-  var lastMessageTextSaved = '';
-  var lastMessageTextEqualTimes = 0;
+// async function helper_waitForMessage() {
+//   var whileController = true;
+//   var lastMessageTextSaved = '';
+//   var lastMessageTextEqualTimes = 0;
 
-  while (whileController) {
-    var receivedMessages = helper_getReceivedMessages();
+//   while (whileController) {
+//     var receivedMessages = helper_getReceivedMessages();
 
-    if (receivedMessages.length > 0) {
-      var lastMessageText = receivedMessages[0];
-      if (lastMessageText != lastMessageTextSaved) {
-        lastMessageTextSaved = lastMessageText;
-      } else {
-        lastMessageTextEqualTimes += 1;
-        if (lastMessageTextEqualTimes > gptSystemConfig['checkNewMessagesMinEqualTimes']) {
-          // On new message
-          whileController = false;
-          break;
-        }
-      }
-    }
+//     if (receivedMessages.length > 0) {
+//       var lastMessageText = receivedMessages[0];
+//       if (lastMessageText != lastMessageTextSaved) {
+//         lastMessageTextSaved = lastMessageText;
+//       } else {
+//         lastMessageTextEqualTimes += 1;
+//         if (lastMessageTextEqualTimes > gptSystemConfig['checkNewMessagesMinEqualTimes']) {
+//           // On new message
+//           whileController = false;
+//           break;
+//         }
+//       }
+//     }
 
-    await helper_sleep(500);
+//     await helper_sleep(500);
 
-  }
+//   }
 
-  return lastMessageTextSaved;
-}
+//   return lastMessageTextSaved;
+// }
 
 async function helper_waitForAppairInDOM(
   querySelectorString,
@@ -247,7 +247,9 @@ async function copilotDesigner_waitForLoaded() {
   return true;
 }
 
+var copilotDesigner_sendedMessage = false;
 async function copilotDesigner_sendMessage(messageText) {
+  copilotDesigner_sendedMessage = true;
   var textareaItem = document.querySelector(copilotDesignerSystemConfig['textareaQuerySelector']);
   if (textareaItem !== null && textareaItem !== undefined) {
     textareaItem.focus();
@@ -557,7 +559,7 @@ function sendMessageToBackground(tabId, queryId, finalAnswer) {
     queryId: queryId,
     finalAnswer: finalAnswer
   }, function (response) {
-    console.log("Respuesta recibida desde background.js:", response);
+    console.log("[Crafy Web Engine] Respuesta recibida desde background.js:", response);
   });
 }
 
@@ -578,9 +580,10 @@ function checkIfIsFirstTimeWurl() {
 var global_chatgpt;
 
 if (checkIfIsFirstTimeWurl()) {
+  localStorage.removeItem('crafyEngine_persistantCopilotDesigner_generating');
   // Escuchar mensajes desde el script de fondo
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    console.log('[Crafy Engine] Geted runtime message');
+    console.log('[Crafy Web Engine] Geted runtime message');
     if (message.action === 'readHtml') {
       (async () => {
         const { chatgpt } = await import(chrome.runtime.getURL('chatgpt.js'));
@@ -591,7 +594,7 @@ if (checkIfIsFirstTimeWurl()) {
   });
 } else {
   var persistantCopilotDesignerInfo = localStorage.getItem('crafyEngine_persistantCopilotDesigner_generating');
-  console.log('persistantCopilotDesignerInfo', persistantCopilotDesignerInfo);
+  // console.log('persistantCopilotDesignerInfo', persistantCopilotDesignerInfo);
   if (persistantCopilotDesignerInfo !== undefined && persistantCopilotDesignerInfo !== null) {
     var persistantCopilotDesignerInfo_dec = JSON.parse(persistantCopilotDesignerInfo);
     helper_insertWorkingMessage(persistantCopilotDesignerInfo_dec.instructions);

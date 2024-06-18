@@ -7,12 +7,13 @@ var extension_global_config = {
   'GoogleImagesFocusTab': false,
   'CopilotDesignerLink': 'https://www.bing.com/images/create?crafyEngineFirstTime=1',
   'CopilotDesignerFocusTab': false,
+  'CopilotDesignerBaseLink': 'bing.com/images/create',
   'CopilotLink': 'https://copilot.microsoft.com/?crafyEngineFirstTime=1',
   'CopilotFocusTab': false,
 };
 
 chrome.runtime.onInstalled.addListener(() => {
-  console.log('Extension instalada');
+  console.log('[Crafy Web Engine] Extension instalada');
 });
 
 // Función para abrir la URL, rellenar el formulario y leer el HTML en segundo plano
@@ -20,10 +21,15 @@ function accessAndFillForm(queryId, instructions, targetURL, activeTab = false) 
   chrome.tabs.create({ url: targetURL, active: activeTab }, (tab) => {
     chrome.tabs.onUpdated.addListener(function listener(tabId, info) {
       if (info.status === 'complete' && tabId === tab.id) {
-        chrome.scripting.executeScript({
-          target: { tabId: tab.id },
-          files: ['content.js']
-        }, () => {
+        var executeScriptParams = {
+          target: { tabId: tab.id }
+        };
+        if (
+          !targetURL.includes(extension_global_config['CopilotDesignerBaseLink'])
+        ) {
+          executeScriptParams.files = ['content.js'];
+        }
+        chrome.scripting.executeScript(executeScriptParams, () => {
           // Leer el HTML después de que el formulario haya sido enviado y procesado
           chrome.tabs.sendMessage(tab.id, {
             action: 'readHtml',
@@ -150,7 +156,5 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
     extensionQueryList[message.queryId]['sendResponsePageFunction']({
       answer: message.finalAnswer
     });
-    // Puedes enviar una respuesta de vuelta si es necesario
-    // sendResponse({ respuesta: "Mensaje recibido correctamente en background.js" });
   }
 });

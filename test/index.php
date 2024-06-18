@@ -22,6 +22,9 @@
 
   <h1>Testing Zone 🛠️ - Crafy Web Engine</h1>
 
+  <p>Extension ID</p>
+  <input type="text" id="extensionIdInput" placeholder="ID de la extensión">
+
   <h1>ChatGPT Translator</h1>
 
   <input type="text" id="text_input" placeholder="Ingresa un texto">
@@ -63,7 +66,12 @@
 
   <script>
     // ID de tu extensión (reemplaza con tu propio ID)
-    const extensionId = 'jhebfeccjamgkimndkjbfeahehimcbec';
+    var extensionId = '';
+
+    var extensionIdInput = document.getElementById('extensionIdInput');
+    extensionIdInput.oninput = function () {
+      extensionId = extensionIdInput.value;
+    };
 
     var text_input = document.getElementById('text_input');
     var lang_selector = document.getElementById('lang_selector');
@@ -232,8 +240,8 @@
     function generateImageWithCopilotDesigner() {
       return new Promise(function (resolve, reject) {
         chrome.runtime.sendMessage(extensionId, {
-          focusTab: false, // opcional
-          backToCurrentTab: false, // opcional
+          focusTab: true, // opcional
+          backToCurrentTab: true, // opcional
           insertWorkingMessage: true, // opcional
           action: 'sendToCopilotDesigner',
           iaction: 'generateImage',
