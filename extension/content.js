@@ -14,11 +14,24 @@ var gptSystemConfig = {
   'textareaQuerySelector': '#prompt-textarea',
   'buttonQuerySelector': '[data-testid="fruitjuice-send-button"]',
   'iaMessagesQuerySelector': '[data-message-author-role="assistant"] .markdown.prose',
-  'checkNewMessagesMinEqualTimes': 3,
+  'checkNewMessagesMinEqualTimes': 5,
 };
 
 function helper_sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function helper_htmlentities(str) {
+  return str.replace(/[&<>"']/g, function (tag) {
+    const charsToReplace = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    };
+    return charsToReplace[tag] || tag;
+  });
 }
 
 async function helper_waitForLoaded() {
@@ -34,56 +47,61 @@ async function helper_waitForLoaded() {
   return true;
 }
 
-// function helper_getReceivedMessages() {
-//   var resultado = [];
-//   var elementos = document.querySelectorAll(gptSystemConfig['iaMessagesQuerySelector']);
-//   for (const elemento of elementos) {
-//     let pElems = elemento.querySelectorAll('p');
-//     if (pElems.length > 0) {
-//       pText = '';
-//       var firstTime = true;
-//       for (const pElm of pElems) {
-//         if (firstTime) {
-//           pText += pElm.innerText;
-//           firstTime = false;
-//         } else {
-//           pText += '\n' + pElm.innerText;
-//         }
-//       }
-//       resultado.push(pText);
-//     }
-//   }
-//   return resultado;
-// }
+function helper_getReceivedMessages() {
+  var resultado = [];
+  var elementos = document.querySelectorAll(gptSystemConfig['iaMessagesQuerySelector']);
+  for (const elemento of elementos) {
+    let pText = elemento.innerText;
+    if (pText.length > 0) {
+      resultado.push(helper_htmlentities(pText));
+    }
+  }
+  return resultado;
+}
 
-// async function helper_waitForMessage() {
-//   var whileController = true;
-//   var lastMessageTextSaved = '';
-//   var lastMessageTextEqualTimes = 0;
+async function helper_waitForMessage() {
+  var whileController = true;
+  var lastMessageTextSaved = '';
+  var lastMessageTextEqualTimes = 0;
 
-//   while (whileController) {
-//     var receivedMessages = helper_getReceivedMessages();
+  while (whileController) {
+    var receivedMessages = helper_getReceivedMessages();
 
-//     if (receivedMessages.length > 0) {
-//       var lastMessageText = receivedMessages[0];
-//       if (lastMessageText != lastMessageTextSaved) {
-//         lastMessageTextSaved = lastMessageText;
-//       } else {
-//         lastMessageTextEqualTimes += 1;
-//         if (lastMessageTextEqualTimes > gptSystemConfig['checkNewMessagesMinEqualTimes']) {
-//           // On new message
-//           whileController = false;
-//           break;
-//         }
-//       }
-//     }
+    if (receivedMessages.length > 0) {
+      var lastMessageText = receivedMessages[0];
+      if (lastMessageText != lastMessageTextSaved) {
+        lastMessageTextSaved = lastMessageText;
+      } else {
+        lastMessageTextEqualTimes += 1;
+        if (lastMessageTextEqualTimes > gptSystemConfig['checkNewMessagesMinEqualTimes']) {
+          // On new message
+          whileController = false;
+          break;
+        }
+      }
+    }
 
-//     await helper_sleep(500);
+    await helper_sleep(500);
 
-//   }
+  }
 
-//   return lastMessageTextSaved;
-// }
+  return lastMessageTextSaved;
+}
+
+async function chatgpt_sendMessage(messageText) {
+  var textareaItem = document.querySelector(gptSystemConfig['textareaQuerySelector']);
+  if (textareaItem !== null && textareaItem !== undefined) {
+    textareaItem.focus();
+    document.execCommand('insertText', false, messageText);
+    await helper_sleep(500);
+    var sendButtonItem = document.querySelector(gptSystemConfig['buttonQuerySelector']);
+    if (sendButtonItem !== null && sendButtonItem !== undefined) {
+      sendButtonItem.click();
+      return true;
+    }
+  }
+  return false;
+}
 
 async function helper_waitForAppairInDOM(
   querySelectorString,
@@ -192,7 +210,7 @@ function gemini_getReceivedMessages() {
   var resultado = [];
   var elementos = document.querySelectorAll(geminiSystemConfig['iaMessagesQuerySelector']);
   for (const elemento of elementos) {
-    resultado.push(elemento.innerText);
+    resultado.push(helper_htmlentities(elemento.innerText));
   }
   return resultado;
 }
@@ -351,7 +369,7 @@ function copilot_getReceivedMessages() {
   for (const elemento of elementos) {
     var elementContainer = elemento.shadowRoot.querySelectorAll('cib-message[finalized]')[0];
     if (elementContainer !== undefined) {
-      resultado.push(elementContainer.shadowRoot.querySelectorAll('cib-shared')[0].querySelectorAll('.ac-textBlock')[0].innerText);
+      resultado.push(helper_htmlentities(elementContainer.shadowRoot.querySelectorAll('cib-shared')[0].querySelectorAll('.ac-textBlock')[0].innerText));
     }
   }
   return resultado;
@@ -396,7 +414,7 @@ async function fillForm(tabId, queryId, instructions, chatgpt) {
   if (instructions.action === 'sendToChatGPT') {
     await helper_waitForLoaded();
     await helper_sleep(1000);
-    if (instructions.iaction == 'translateText') {
+    if (instructions.iaction == 'translateTextWJS') {
       try {
         const translation = await chatgpt.translate(instructions.text, instructions.target_language);
         await helper_deleteLastChat();
@@ -410,7 +428,30 @@ async function fillForm(tabId, queryId, instructions, chatgpt) {
           'ok': false
         };
       }
-    } else if (instructions.iaction == 'sendMessage') {
+    } else if (instructions.iaction == 'translateText') {
+      try {
+        var completeInstructionText = `Translate the following text into the language: ` + instructions.target_language + `. Respond only with the translation and without quotes.\n` + instructions.text;
+        var messageSendTry = await chatgpt_sendMessage(completeInstructionText);
+        if (messageSendTry) {
+          var chatGPTResponse = await helper_waitForMessage();
+          await helper_deleteLastChat();
+          finalAnswer = {
+            'result': chatGPTResponse,
+            'ok': true
+          };
+        } else {
+          finalAnswer = {
+            'error': 'Error with ChatGPT: chatgpt_sendMessage',
+            'ok': false
+          };
+        }
+      } catch (error) {
+        finalAnswer = {
+          'error': error,
+          'ok': false
+        };
+      }
+    } else if (instructions.iaction == 'sendMessageWJS') {
       try {
         const response = await chatgpt.askAndGetReply(instructions.text);
         await helper_deleteLastChat();
@@ -418,6 +459,28 @@ async function fillForm(tabId, queryId, instructions, chatgpt) {
           'result': response,
           'ok': true
         };
+      } catch (error) {
+        finalAnswer = {
+          'error': error,
+          'ok': false
+        };
+      }
+    } else if (instructions.iaction == 'sendMessage') {
+      try {
+        var messageSendTry = await chatgpt_sendMessage(instructions.text);
+        if (messageSendTry) {
+          var chatGPTResponse = await helper_waitForMessage();
+          await helper_deleteLastChat();
+          finalAnswer = {
+            'result': chatGPTResponse,
+            'ok': true
+          };
+        } else {
+          finalAnswer = {
+            'error': 'Error with ChatGPT: chatgpt_sendMessage',
+            'ok': false
+          };
+        }
       } catch (error) {
         finalAnswer = {
           'error': error,
