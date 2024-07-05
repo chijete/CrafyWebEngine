@@ -66,12 +66,13 @@
 
   <script>
     // ID de tu extensión (reemplaza con tu propio ID)
-    var extensionId = '';
+    var extensionId = 'hkhcmbahgehppppaacemehfgkbaifgdk';
 
     var extensionIdInput = document.getElementById('extensionIdInput');
     extensionIdInput.oninput = function () {
       extensionId = extensionIdInput.value;
     };
+    extensionIdInput.value = extensionId;
 
     var text_input = document.getElementById('text_input');
     var lang_selector = document.getElementById('lang_selector');
