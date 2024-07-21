@@ -12,7 +12,7 @@ var workingOnItSignal = `
 
 var gptSystemConfig = {
   'textareaQuerySelector': '#prompt-textarea',
-  'buttonQuerySelector': '[data-testid="fruitjuice-send-button"]',
+  'buttonQuerySelector': '[data-testid="send-button"]',
   'iaMessagesQuerySelector': '[data-message-author-role="assistant"] .markdown.prose',
   'checkNewMessagesMinEqualTimes': 5,
 };

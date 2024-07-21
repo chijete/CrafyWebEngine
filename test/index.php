@@ -128,6 +128,7 @@
           iaction: 'sendMessage',
           text: text_input_speak.value
         }, (response) => {
+          console.log(response);
           if (response.answer.ok) {
             speak_result.innerHTML = response.answer.result.replace(/\n/g, '<br>');
           } else {
