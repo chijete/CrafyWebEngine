@@ -175,6 +175,7 @@ var geminiSystemConfig = {
   'textareaQuerySelector': 'rich-textarea',
   'buttonQuerySelector': '[mat-icon-button].send-button',
   'iaMessagesQuerySelector': 'message-content.model-response-text',
+  'textareaMobileQuerySelector': '.text-input-field.ng-tns-c2296895150-4.height-expanded-past-single-line',
   'checkNewMessagesMinEqualTimes': 6,
 };
 
@@ -192,6 +193,10 @@ async function gemini_waitForLoaded() {
 }
 
 async function gemini_sendMessage(messageText) {
+  var mobileTextareaScreen = document.querySelector(geminiSystemConfig['textareaMobileQuerySelector']);
+  if (mobileTextareaScreen !== false && mobileTextareaScreen !== undefined && mobileTextareaScreen !== null) {
+    mobileTextareaScreen.dispatchEvent(new Event('click'));
+  }
   var textareaItem = document.querySelector(geminiSystemConfig['textareaQuerySelector']);
   if (textareaItem !== null && textareaItem !== undefined) {
     textareaItem.focus();
