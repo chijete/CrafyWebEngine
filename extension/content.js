@@ -175,7 +175,7 @@ var geminiSystemConfig = {
   'textareaQuerySelector': 'rich-textarea',
   'buttonQuerySelector': '[mat-icon-button].send-button',
   'iaMessagesQuerySelector': 'message-content.model-response-text',
-  'textareaMobileQuerySelector': '.text-input-field.ng-tns-c2296895150-4.height-expanded-past-single-line',
+  'textareaMobileQuerySelector': '[data-node-type="input-area"] > div',
   'checkNewMessagesMinEqualTimes': 6,
 };
 
