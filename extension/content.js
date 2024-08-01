@@ -4,7 +4,7 @@ console.log('[Crafy Web Engine] Crafy Engine inserted!');
 
 var workingOnItSignal = `
 <div style="display: block; visibility: visible; width: 250px; height: 250px; background: #1FC276; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 10px; border-radius: 10px; z-index: 19000; margin: 0;">
-  <p style="display: block; visibility: visible; font-size: 25px; font-weight: bold; font-family: sans-serif; color: #fff; text-align: center; margin: 0; padding: 0;">Crafy Engine está trabajando</p>
+  <p style="display: block; visibility: visible; font-size: 25px; font-weight: bold; font-family: sans-serif; color: #fff; text-align: center; margin: 0; padding: 0;">Crafy Web Engine está trabajando</p>
   <p style="display: block; visibility: visible; font-size: 22px; font-family: sans-serif; color: #fff; text-align: center; margin-top: 8px; padding: 0;">Por favor espere...</p>
   <p style="display: block; visibility: visible; font-size: 18px; font-family: sans-serif; color: #fff; text-align: center; margin-top: 5px; padding: 0;">Please wait...</p>
 </div>
@@ -177,6 +177,9 @@ var geminiSystemConfig = {
   'iaMessagesQuerySelector': 'message-content.model-response-text',
   'textareaMobileQuerySelector': '[data-node-type="input-area"] > div',
   'checkNewMessagesMinEqualTimes': 6,
+  'resetChatQuerySelector': '.new-conversation-container expandable-button button',
+  'resetChatMobileQuerySelector': '[data-test-id="reset-button"]',
+  'resetChatConfirmButtonQuerySelector': '[data-test-id="confirm-button"]',
 };
 
 async function gemini_waitForLoaded() {
@@ -247,6 +250,37 @@ async function gemini_waitForMessage() {
   }
 
   return lastMessageTextSaved;
+}
+
+async function gemini_deleteLastChat() {
+
+  try {
+
+    var btn1 = document.querySelector(geminiSystemConfig['resetChatQuerySelector']);
+    if (btn1 !== undefined && btn1 !== null) {
+      btn1.click();
+    }
+  
+    var btn2 = document.querySelector(geminiSystemConfig['resetChatMobileQuerySelector']);
+    if (btn2 !== undefined && btn2 !== null) {
+      btn2.click();
+    }
+  
+    await helper_sleep(350);
+  
+    var btn3 = document.querySelector(geminiSystemConfig['resetChatConfirmButtonQuerySelector']);
+    if (btn3 !== undefined && btn3 !== null) {
+      btn3.click();
+    }
+  
+    await helper_sleep(400);
+
+    return true;
+    
+  } catch (error) {
+    return false;
+  }
+
 }
 
 // Copilot Designer
@@ -503,6 +537,7 @@ async function fillForm(tabId, queryId, instructions, chatgpt) {
       var messageSended = await gemini_sendMessage(instructions.text);
       if (messageSended) {
         var receivedMessage = await gemini_waitForMessage();
+        await gemini_deleteLastChat();
         finalAnswer['ok'] = true;
         finalAnswer['result'] = receivedMessage;
       }
@@ -654,9 +689,11 @@ if (checkIfIsFirstTimeWurl()) {
     console.log('[Crafy Web Engine] Geted runtime message');
     if (message.action === 'readHtml') {
       (async () => {
-        const { chatgpt } = await import(chrome.runtime.getURL('chatgpt.js'));
-        global_chatgpt = chatgpt;
-        fillForm(message.tabId, message.queryId, message.instructions, chatgpt);
+        if (global_chatgpt === undefined) {
+          const { chatgpt } = await import(chrome.runtime.getURL('chatgpt.js'));
+          global_chatgpt = chatgpt;
+        }
+        fillForm(message.tabId, message.queryId, message.instructions, global_chatgpt);
       })();
     }
   });

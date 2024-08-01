@@ -17,31 +17,45 @@ chrome.runtime.onInstalled.addListener(() => {
 });
 
 // Función para abrir la URL, rellenar el formulario y leer el HTML en segundo plano
-function accessAndFillForm(queryId, instructions, targetURL, activeTab = false) {
-  chrome.tabs.create({ url: targetURL, active: activeTab }, (tab) => {
-    chrome.tabs.onUpdated.addListener(function listener(tabId, info) {
-      if (info.status === 'complete' && tabId === tab.id) {
-        var executeScriptParams = {
-          target: { tabId: tab.id }
-        };
-        if (
-          !targetURL.includes(extension_global_config['CopilotDesignerBaseLink'])
-        ) {
-          executeScriptParams.files = ['content.js'];
-        }
-        chrome.scripting.executeScript(executeScriptParams, () => {
-          // Leer el HTML después de que el formulario haya sido enviado y procesado
-          chrome.tabs.sendMessage(tab.id, {
-            action: 'readHtml',
-            tabId: tab.id,
-            queryId: queryId,
-            instructions: instructions
+function accessAndFillForm(queryId, instructions, targetURL, activeTab = false, persistantTabResult = false) {
+  if (persistantTabResult === false || persistantTabResult == 'createTab') {
+    chrome.tabs.create({ url: targetURL, active: activeTab }, (tab) => {
+      chrome.tabs.onUpdated.addListener(function listener(tabId, info) {
+        if (info.status === 'complete' && tabId === tab.id) {
+          if (persistantTabResult == 'createTab') {
+            persistantTabs[instructions.action]['tabId'] = tab.id;
+          }
+          var executeScriptParams = {
+            target: { tabId: tab.id }
+          };
+          if (
+            !targetURL.includes(extension_global_config['CopilotDesignerBaseLink'])
+          ) {
+            executeScriptParams.files = ['content.js'];
+          }
+          chrome.scripting.executeScript(executeScriptParams, () => {
+            // Leer el HTML después de que el formulario haya sido enviado y procesado
+            chrome.tabs.sendMessage(tab.id, {
+              action: 'readHtml',
+              tabId: tab.id,
+              queryId: queryId,
+              instructions: instructions
+            });
           });
-        });
-        chrome.tabs.onUpdated.removeListener(listener);
-      }
+          chrome.tabs.onUpdated.removeListener(listener);
+        }
+      });
     });
-  });
+  } else {
+    chrome.tabs.update(persistantTabResult, { active: true }).then(function (tab) {
+      chrome.tabs.sendMessage(tab.id, {
+        action: 'readHtml',
+        tabId: tab.id,
+        queryId: queryId,
+        instructions: instructions
+      });
+    });
+  }
 }
 
 function getCurrentTabId() {
@@ -78,6 +92,49 @@ function blobToBase64(blob) {
 }
 
 var extensionQueryList = {};
+var persistantTabs = {
+  'sendToChatGPT': {},
+  'sendToGemini': {}
+};
+
+function checkTabExists(tabId) {
+  return new Promise((resolve, reject) => {
+    chrome.tabs.get(tabId, (tab) => {
+      if (chrome.runtime.lastError) {
+        // La pestaña no existe
+        resolve(false);
+      } else {
+        // La pestaña existe
+        resolve(true);
+      }
+    });
+  });
+}
+
+async function persistantTabManagment(message) {
+  var persistantTab = false;
+  if (message.persistantTab !== undefined) {
+    persistantTab = message.persistantTab;
+  }
+  if (persistantTab) {
+    if (persistantTabs[message.action] !== undefined) {
+      if (persistantTabs[message.action]['tabId'] !== undefined) {
+        var tab_exists = await checkTabExists(persistantTabs[message.action]['tabId']);
+        if (tab_exists) {
+          return persistantTabs[message.action]['tabId'];
+        } else {
+          return 'createTab';
+        }
+      } else {
+        return 'createTab';
+      }
+    } else {
+      return false;
+    }
+  } else {
+    return false;
+  }
+}
 
 // Escuchar mensajes desde otras partes de la extensión o desde páginas web externas
 chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => {
@@ -97,12 +154,16 @@ chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => 
       if (focusTab === null) {
         focusTab = extension_global_config['ChatGPTFocusTab'];
       }
-      accessAndFillForm(queryId, message, extension_global_config['ChatGPTLink'], focusTab);
+      persistantTabManagment(message).then(function (persistantTabResult) {
+        accessAndFillForm(queryId, message, extension_global_config['ChatGPTLink'], focusTab, persistantTabResult);
+      });
     } else if (message.action === 'sendToGemini') {
       if (focusTab === null) {
         focusTab = extension_global_config['GeminiFocusTab'];
       }
-      accessAndFillForm(queryId, message, extension_global_config['GeminiLink'], focusTab);
+      persistantTabManagment(message).then(function (persistantTabResult) {
+        accessAndFillForm(queryId, message, extension_global_config['GeminiLink'], focusTab, persistantTabResult);
+      });
     } else if (message.action === 'sendToCopilotDesigner') {
       if (focusTab === null) {
         focusTab = extension_global_config['CopilotDesignerFocusTab'];
@@ -149,7 +210,13 @@ chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => 
 // Escuchar mensajes enviados desde content.js
 chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
   if (message.action === "allWebHtml") {
-    chrome.tabs.remove(message.tab_id);
+    var removeTheTab = true;
+    if (extensionQueryList[message.queryId]['message']['persistantTab']) {
+      removeTheTab = false;
+    }
+    if (removeTheTab) {
+      chrome.tabs.remove(message.tab_id);
+    }
     if (extensionQueryList[message.queryId]['message']['backToCurrentTab']) {
       chrome.tabs.update(extensionQueryList[message.queryId]['originTabId'], { active: true });
     }

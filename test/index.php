@@ -124,6 +124,7 @@
           focusTab: true, // opcional
           backToCurrentTab: true, // opcional
           insertWorkingMessage: true, // opcional
+          persistantTab: true, // opcional
           action: 'sendToChatGPT',
           iaction: 'sendMessage',
           text: text_input_speak.value
@@ -143,6 +144,7 @@
         chrome.runtime.sendMessage(extensionId, {
           backToCurrentTab: true, // opcional
           insertWorkingMessage: true, // opcional
+          persistantTab: true, // opcional
           action: 'sendToGemini',
           iaction: 'sendMessage',
           text: gemini_text_input_speak.value.replace(/\n{2,}/g, '\n')
