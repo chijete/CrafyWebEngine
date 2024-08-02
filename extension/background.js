@@ -23,7 +23,7 @@ function accessAndFillForm(queryId, instructions, targetURL, activeTab = false, 
       chrome.tabs.onUpdated.addListener(function listener(tabId, info) {
         if (info.status === 'complete' && tabId === tab.id) {
           if (persistantTabResult == 'createTab') {
-            persistantTabs[instructions.action]['tabId'] = tab.id;
+            set_persistantTabs(instructions.action, tab.id);
           }
           var executeScriptParams = {
             target: { tabId: tab.id }
@@ -92,10 +92,31 @@ function blobToBase64(blob) {
 }
 
 var extensionQueryList = {};
-var persistantTabs = {
-  'sendToChatGPT': {},
-  'sendToGemini': {}
-};
+var persistantTabs = [
+  'sendToChatGPT',
+  'sendToGemini'
+];
+
+async function get_persistantTabs(actionName) {
+  return new Promise(function (resolve, reject) {
+    var keyName = 'persistantTabs_' + actionName;
+    chrome.storage.local.get([keyName], function (result) {
+      // undefined if not exists
+      resolve(result[keyName]);
+    });
+  });
+}
+
+async function set_persistantTabs(actionName, tabId) {
+  return new Promise(function (resolve, reject) {
+    var keyName = 'persistantTabs_' + actionName;
+    var dataToSave = {};
+    dataToSave[keyName] = tabId;
+    chrome.storage.local.set(dataToSave, function () {
+      resolve(true);
+    });
+  });
+}
 
 function checkTabExists(tabId) {
   return new Promise((resolve, reject) => {
@@ -117,11 +138,12 @@ async function persistantTabManagment(message) {
     persistantTab = message.persistantTab;
   }
   if (persistantTab) {
-    if (persistantTabs[message.action] !== undefined) {
-      if (persistantTabs[message.action]['tabId'] !== undefined) {
-        var tab_exists = await checkTabExists(persistantTabs[message.action]['tabId']);
+    if (persistantTabs.includes(message.action)) {
+      let persistantTabId = await get_persistantTabs(message.action);
+      if (persistantTabId !== undefined) {
+        var tab_exists = await checkTabExists(persistantTabId);
         if (tab_exists) {
-          return persistantTabs[message.action]['tabId'];
+          return persistantTabId;
         } else {
           return 'createTab';
         }

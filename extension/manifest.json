@@ -1,10 +1,11 @@
 {
   "manifest_version": 3,
   "name": "Crafy Web Engine",
-  "version": "1.6",
+  "version": "1.7",
   "description": "Motor Web de Crafy Holding y sus aplicaciones.",
   "permissions": [
-    "scripting"
+    "scripting",
+    "storage"
   ],
   "host_permissions": [
     "<all_urls>"
