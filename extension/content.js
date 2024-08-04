@@ -133,7 +133,21 @@ async function helper_waitForAppairInDOM(
 
 async function helper_deleteLastChat() {
   try {
-    var optionsButton = document.querySelectorAll('ol li')[0].querySelector('button');
+
+    var returnVal = false;
+
+    var mobileOpenMenuButton = document.querySelectorAll('.px-3')[0];
+    if (mobileOpenMenuButton !== undefined) {
+      mobileOpenMenuButton.click();
+    }
+    await helper_waitForAppairInDOM(
+      'ol li button',
+      0,
+      60,
+      100
+    );
+
+    var optionsButton = document.querySelectorAll('ol li button')[0];
     // var optionsButtonParent = optionsButton.parentElement.parentElement;
     // optionsButtonParent.classList.remove('hidden');
     // optionsButtonParent.style.display = 'flex';
@@ -160,11 +174,22 @@ async function helper_deleteLastChat() {
       );
       if (findedInDom_1) {
         document.querySelectorAll('[role="dialog"] [as="button"]')[0].click();
-        return true;
+        returnVal = true;
       }
     }
-    return false;
+
+    try {
+      // New chat in mobile
+      await helper_sleep(150);
+      document.querySelectorAll('.px-3')[2].click();
+    } catch (errori) { }
+    return returnVal;
   } catch (error) {
+    try {
+      // New chat in mobile
+      await helper_sleep(150);
+      document.querySelectorAll('.px-3')[2].click();
+    } catch (errori) {}
     return false;
   }
 }
@@ -178,7 +203,7 @@ var geminiSystemConfig = {
   'textareaMobileQuerySelector': '[data-node-type="input-area"] > div',
   'checkNewMessagesMinEqualTimes': 6,
   'resetChatQuerySelector': '.new-conversation-container expandable-button button',
-  'resetChatMobileQuerySelector': '[data-test-id="reset-button"]',
+  'resetChatMobileQuerySelector': '[data-test-id="reset-button"], [data-test-id="start-new-conversation-button"]',
   'resetChatConfirmButtonQuerySelector': '[data-test-id="confirm-button"]',
 };
 
