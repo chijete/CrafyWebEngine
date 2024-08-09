@@ -67,8 +67,8 @@ async function helper_waitForMessage() {
   while (whileController) {
     var receivedMessages = helper_getReceivedMessages();
 
-    if (receivedMessages.length > 0) {
-      var lastMessageText = receivedMessages[0];
+    if (receivedMessages.length > 0 && receivedMessages[receivedMessages.length - 1].length > 0) {
+      var lastMessageText = receivedMessages[receivedMessages.length - 1];
       if (lastMessageText != lastMessageTextSaved) {
         lastMessageTextSaved = lastMessageText;
       } else {
@@ -256,8 +256,8 @@ async function gemini_waitForMessage() {
   while (whileController) {
     var receivedMessages = gemini_getReceivedMessages();
 
-    if (receivedMessages.length > 0 && receivedMessages[0].length > 0) {
-      var lastMessageText = receivedMessages[0];
+    if (receivedMessages.length > 0 && receivedMessages[receivedMessages.length - 1].length > 0) {
+      var lastMessageText = receivedMessages[receivedMessages.length - 1];
       if (lastMessageText != lastMessageTextSaved) {
         lastMessageTextSaved = lastMessageText;
       } else {
