@@ -6,7 +6,7 @@ Al instalar Crafy Web Engine podrás obtener acceso a nuevas funciones dentro de
 
 ### Instalación
 
-Puedes ver todas las funciones de Crafy Web Engine e instalarlo en tu navegador desde su web oficial: [https://chijete.com/CrafyWebEngine/](https://chijete.com/CrafyWebEngine/)
+Puedes ver todas las funciones de Crafy Web Engine e instalarlo en tu navegador desde su web oficial: [https://crafy.net/CrafyWebEngine/](https://crafy.net/CrafyWebEngine/)
 
 ### Open Source
 
@@ -23,4 +23,4 @@ De esta forma cualquier persona puede consultar de forma pública y gratuita el 
     *   **icon.png**: ícono de la extensión.
     *   **manifest.json**: manifiesto de la extensión.
 *   **packages**: paquetes finales de cada versión de la extensión en formato ZIP.
-*   **test**: página de prueba de las funciones de la extensión; es el código fuente de esta página: [https://chijete.com/CrafyWebEngine/test/](https://chijete.com/CrafyWebEngine/test/)
+*   **test**: página de prueba de las funciones de la extensión; es el código fuente de esta página: [https://crafy.net/CrafyWebEngine/test/](https://crafy.net/CrafyWebEngine/test/)
